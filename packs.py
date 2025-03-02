@@ -55,7 +55,7 @@ def simulate_open_packs(pack_types, n):
 				writer.writerow(result)
 
 def professor_cat_analyse_pack_results(pack_types):
-	# 
+	# Thou shalt calculate the results of opening packs 
 	for pack in pack_types:
 		type_count = {}
 		type_total = {}
@@ -75,7 +75,7 @@ def professor_cat_analyse_pack_results(pack_types):
 					type_total[row[3]] = int(row[2])
 
 		# Print results
-		print("\nResults for opening " + str(total_count) + " " + pack, "packs:")
+		print("\nResults from opening " + str(total_count) + " " + pack, "packs:")
 		for cat_total,cat_type in sorted(((v,k) for k,v in type_total.items()), reverse=True):
 			result_string = str(cat_total) + " " + cat_type + " cats"
 			result_string += "\t(" + '{:.2f}'.format(type_count[cat_type] / total_count * 100) + "% of packs)"
