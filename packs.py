@@ -5,41 +5,9 @@
 
 """
 
-from main import type_dict, CAT_TYPES, cattypes, pack_data
-import random
+from main import type_dict, CAT_TYPES, cattypes, pack_data, open_pack
+#import random
 import csv
-
-def open_pack(pack):
-	level = next((i for i, p in enumerate(pack_data) if p["name"] == pack), 0)
-
-	# bump rarity
-	try_bump = True
-	while try_bump:
-		if random.randint(1, 100) <= pack_data[level]["upgrade"]:
-			level += 1
-		else:
-			try_bump = False
-	final_level = pack_data[level]
-
-	# select cat type
-	goal_value = final_level["value"]
-	lower_bound, upper_bound = goal_value * 0.85, goal_value * 1.15
-	found = []
-	while not found:
-		test_type = random.choice(cattypes)
-		value_per_type = len(CAT_TYPES) / type_dict[test_type]
-		n = 0
-		while True:
-			n += 1
-			if value_per_type * n < lower_bound:
-				continue
-			if value_per_type * n > upper_bound:
-				break
-			found.append([test_type, n])
-	reward = random.choice(found)
-
-	# return starting pack level, final pack level, cat amount and type
-	return (pack, final_level['name'], reward[1], reward[0])
 
 def simulate_open_packs(pack_types, n):
 	# Test all pack types
@@ -57,36 +25,63 @@ def simulate_open_packs(pack_types, n):
 def professor_cat_analyse_pack_results(pack_types):
 	# Thou shalt calculate the results of opening packs 
 	for pack in pack_types:
-		type_count = {}
-		type_total = {}
-		total_count = 0
+		# Count only cats from regular opening (no upgrades)
+		open_count = {}
+		cat_total = {}
+		count = 0
+
+		# Count all cats from opening packs, including when upgrades occur
+		upgrade_open_count = {}
+		upgrade_cat_total = {}
+		upgrade_count = 0
 
 		# Open CSV and count results
 		with open(pack + '.csv', 'r') as csv_file:
 			reader = csv.reader(csv_file)
 			next(reader)
 			for row in reader:
-				total_count += 1
-				if row[3] in type_count:
-					type_count[row[3]] += 1
-					type_total[row[3]] += int(row[2])
+				# Count regular pack opens
+				if row[0] == row[1]:
+					count += 1
+					if row[3] in open_count:
+						open_count[row[3]] += 1
+						cat_total[row[3]] += int(row[2])
+					else:
+						open_count[row[3]] = 1
+						cat_total[row[3]] = int(row[2])
+
+				# Count ALL pack opens (including upgrades)
+				upgrade_count += 1
+				if row[3] in upgrade_open_count:
+					upgrade_open_count[row[3]] += 1
+					upgrade_cat_total[row[3]] += int(row[2])
 				else:
-					type_count[row[3]] = 1
-					type_total[row[3]] = int(row[2])
+					upgrade_open_count[row[3]] = 1
+					upgrade_cat_total[row[3]] = int(row[2])
 
 		# Print results
-		print("\nResults from opening " + str(total_count) + " " + pack, "packs:")
-		for cat_total,cat_type in sorted(((v,k) for k,v in type_total.items()), reverse=True):
-			result_string = str(cat_total) + " " + cat_type + " cats"
-			result_string += "\t(" + '{:.2f}'.format(type_count[cat_type] / total_count * 100) + "% of packs)"
+		print("\nResults from " + str(upgrade_count) + " " + pack, "packs:")
+
+		print("No upgrades:")
+		for v,k in sorted(((v,k) for k,v in cat_total.items()), reverse=True):
+			result_string = "\t" + str(v) + " " + k + " cats"
+			result_string += "\t(" + '{:.2f}'.format(upgrade_open_count[k] / upgrade_count * 100) + "% of packs)"
 			print(result_string)
+
+		print("\nIncluding upgrades:")
+		for v,k in sorted(((v,k) for k,v in upgrade_cat_total.items()), reverse=True):
+			result_string = "\t" + str(v) + " " + k + " cats"
+			result_string += "\t(" + '{:.2f}'.format(upgrade_open_count[k] / upgrade_count * 100) + "% of packs)"
+			print(result_string)
+
+		
 
 
 if __name__ == '__main__':
-	pack_types = ["Gold"] #["Wooden", "Stone", "Bronze", "Silver", "Gold"]
+	pack_types = ["Gold"] #["Wooden", "Stone", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Celestial"]
 
 	# Generate pack data
-	simulate_open_packs(pack_types, 100000)
+	simulate_open_packs(pack_types, 10000)
 
 	# Analyse pack results
 	professor_cat_analyse_pack_results(pack_types)
